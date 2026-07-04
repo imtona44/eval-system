@@ -1,0 +1,868 @@
+{% extends "base.html" %}
+
+{% block title %}Admin{% endblock %}
+
+{% block extra_css %}
+    <style>
+        body {
+            background-color: #f8f9fa;
+        }
+        .admin-container {
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+            padding: 30px;
+            margin-top: 30px;
+        }
+        .table th {
+            white-space: nowrap;
+            vertical-align: middle;
+        }
+        .table td {
+            vertical-align: middle;
+        }
+        .table-responsive {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .batch-header {
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        .batch-header:hover {
+            background-color: #0b5ed7 !important;
+        }
+        .collapse {
+            transition: height 0.3s ease;
+        }
+        .toggle-icon {
+            transition: transform 0.3s ease;
+        }
+        [aria-expanded="true"] .toggle-icon {
+            transform: rotate(180deg);
+        }
+        .table-comments td {
+            vertical-align: top;
+        }
+        .table-comments tr:hover {
+            background-color: #f8f9fa;
+        }
+        .table-bordered thead th {
+            background-color: #f8f9fa;
+        }
+        .table-success td {
+            background-color: #d1e7dd;
+        }
+        .table-info td {
+            background-color: #e7f5ff;
+        }
+        .table-danger {
+            background-color: #f8d7da;
+        }
+        .table-danger:hover {
+            background-color: #f5c2c7;
+        }
+        .highlight {
+            background-color: #fff3cd !important;
+            border-left: 3px solid #ffc107 !important;
+            transition: all 0.3s ease;
+        }
+        #searchFilter {
+            border-top-right-radius: 0;
+            border-bottom-right-radius: 0;
+            border-right: none;
+        }
+        #searchInput {
+            border-top-left-radius: 0;
+            border-bottom-left-radius: 0;
+        }
+        .datepicker {
+            background-color: white;
+            cursor: pointer;
+        }
+        .bg-warning.text-white {
+            background-color: #ffc107 !important;
+            color: #212529 !important;
+            transition: background-color 0.3s ease;
+        }
+        @media print {
+            body * {
+                visibility: hidden;
+            }
+            .admin-container, .admin-container * {
+                visibility: visible;
+            }
+            .admin-container {
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 100%;
+                box-shadow: none;
+                padding: 0;
+            }
+            .card-header {
+                background-color: #f8f9fa !important;
+                color: #212529 !important;
+                border-bottom: 1px solid #dee2e6;
+            }
+            .table-danger td {
+                background-color: #f8d7da !important;
+            }
+            .table-success td {
+                background-color: #d1e7dd !important;
+            }
+            .table-info td {
+                background-color: #e7f5ff !important;
+            }
+            a[href]:after {
+                content: none !important;
+            }
+            .btn, .input-group {
+                display: none !important;
+            }
+        }
+        .save-eval {
+            margin-left: 8px;
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <div class="admin-container">
+                <div class="alert alert-info mb-4">
+                    <h5 class="mb-0">Viewing evaluations for: {{ current_trainer }}</h5>
+                </div>
+                <h2 class="text-center mb-4">All Submitted Evaluations</h2>
+                
+                <form method="POST" action="/clear_all" onsubmit="return confirm('Are you sure you want to delete all evaluations? This cannot be undone.');">
+                    <button type="submit" class="btn btn-danger mb-4">
+                        <i class="bi bi-trash"></i> Clear All Evaluations
+                    </button>
+                </form>
+				
+				<div class="d-flex justify-content-between mb-4">
+                    <div>
+                        <button onclick="exportToExcel()" class="btn btn-success">
+                            <i class="bi bi-file-excel"></i> Export to Excel
+                        </button>
+                    </div>
+                </div>
+				
+                <div class="row mb-4">
+                    <div class="col-md-8">
+                        <div class="card">
+                            <div class="card-body">
+                                <div class="row g-2">
+                                    <div class="col-md-3">
+                                        <select id="searchFilter" class="form-select">
+                                            <option value="all">All</option>
+                                            <option value="student">Student</option>
+                                            <option value="trainer">Trainer</option>
+                                            <option value="qualification">Qualification</option>
+                                            <option value="date">Date Range</option>
+                                        </select>
+                                    </div>
+                                    
+                                    <div class="col-md-6" id="defaultSearch">
+                                        <div class="input-group">
+                                            <input type="text" id="searchInput" class="form-control" placeholder="Search all fields...">
+                                            <button class="btn btn-outline-secondary" type="button" onclick="clearSearch()">
+                                                <i class="bi bi-x-lg"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+									
+									<div class="col-md-6 d-none" id="trainerSearch">
+                                        <div class="input-group">
+                                            <select id="trainerSelect" class="form-select">
+                                                <option value="">All Trainers</option>
+                                                <option value="TRAINER 1">TRAINER 1</option>
+                                                <option value="TRAINER 2">TRAINER 2</option>
+                                                <option value="TRAINER 3">TRAINER 3</option>
+                                                <option value="TRAINER 4">TRAINER 4</option>
+                                            </select>
+                                            <button class="btn btn-outline-secondary clear-dropdown" type="button" data-target="trainerSelect">
+                                                <i class="bi bi-x-lg"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="col-md-6 d-none" id="qualificationSearch">
+                                        <div class="input-group">
+                                            <select id="qualificationSelect" class="form-select">
+                                                <option value="">All Qualifications</option>
+                                                <option value="Automotive Servicing NC I">Automotive Servicing NC I</option>
+                                                <option value="Automotive Servicing NC II">Automotive Servicing NC II</option>
+                                                <option value="Driving NC II">Driving NC II</option>
+                                                <option value="Carpentry NC II">Carpentry NC II</option>
+                                                <option value="Masonry NC II">Masonry NC II</option>
+                                                <option value="Cookery NC II">Cookery NC II</option>
+                                                <option value="Housekeeping NC II">Housekeeping NC II</option>
+                                                <option value="Electrical Installation and Maintenance NC II">Electrical Installation and Maintenance NC II</option>
+                                                <option value="Electronic Products Assembly Servicing NC II">Electronic Products Assembly Servicing NC II</option>
+                                                <option value="RAC Servicing(DomRAC) NC II">RAC Servicing(DomRAC) NC II</option>
+                                                <option value="Shielded Metal Arc Welding NC II">Shielded Metal Arc Welding NC II</option>
+                                                <option value="Organic Agriculture Production NC II">Organic Agriculture Production NC II</option>
+                                                <option value="Motorcycle/Small Engine Servicing NC II">Motorcycle/Small Engine Servicing NC II</option>
+                                                <option value="Trainers Methodology I">Trainers Methodology I</option>
+                                                <option value="Bread and Pastry Production NC II">Bread and Pastry Production NC II</option>
+                                                <option value="PV System Installation NC II">PV System Installation NC II</option>
+                                                <option value="PV System Servicing NC III">PV System Servicing NC III</option>
+                                                <option value="Technical Drafting NC II Draft architectural layout and details">Technical Drafting NC II Draft architectural layout and details</option>
+                                                <option value="Technical Drafting NC II Draft Structural layout and details">Technical Drafting NC II Draft Structural layout and details</option>
+                                                <option value="English Proficiency for Customers Workers/Provider">English Proficiency for Customers Workers/Provider</option>
+                                            </select>
+                                            <button class="btn btn-outline-secondary clear-dropdown" type="button" data-target="qualificationSelect">
+                                                <i class="bi bi-x-lg"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="col-md-6 d-none" id="dateSearch">
+                                        <div class="input-group">
+                                            <input type="date" id="startDate" class="form-control datepicker" placeholder="Start date" value="">
+                                            <span class="input-group-text">to</span>
+                                            <input type="date" id="endDate" class="form-control datepicker" placeholder="End date" value="">
+                                            <button class="btn btn-outline-secondary clear-dropdown" type="button" onclick="clearDates()">
+                                                <i class="bi bi-x-lg"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                                <small class="text-muted mt-1 d-block">Filter results by selecting a category</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="noResults" class="alert alert-warning mt-3" style="display: none;">
+                    No matching results found. Try a different search term.
+                </div>
+
+                <div class="d-flex mb-4">
+                    <a href="{{ url_for('trainer_ratings') }}" class="btn btn-info me-2">
+                        <i class="bi bi-graph-up"></i> View Trainer Ratings
+                    </a>
+                </div>
+
+                {% for batch_name, data in batch_data.items() %}
+                <div class="card mb-4">
+                    <div class="card-header bg-primary text-white batch-header" data-bs-toggle="collapse" data-bs-target="#batch-{{ loop.index }}" aria-expanded="false">
+                        <h5 class="mb-0 d-flex justify-content-between align-items-center">
+                            <span>{{ batch_name }} - {{data.trainer_name}}</span>
+                            <i class="bi bi-chevron-down toggle-icon"></i>
+                        </h5>
+                    </div>
+                    <div class="collapse" id="batch-{{ loop.index }}">
+                        <div class="card-body">
+                            <h6>Participants:</h6>
+                            <ul class="list-group list-group-flush mb-3">
+                                {% for participant in data.participants %}
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    <span>{{ participant }}</span>
+                                    <div class="btn-group">
+                                        <div class="d-flex align-items-center">
+                                            <a href="{{ url_for('view_submission', name=participant, admin=1) }}" 
+                                               class="btn btn-outline-primary btn-sm me-2">
+                                                <i class="bi bi-eye"></i> View
+                                            </a>
+                                            <form method="POST" 
+                                                  action="{{ url_for('delete_submission', name=participant) }}" 
+                                                  class="d-inline me-2" 
+                                                  onsubmit="return confirm('Are you sure you want to delete this evaluation?');">
+                                                <button type="submit" class="btn btn-outline-danger btn-sm">
+                                                    <i class="bi bi-trash"></i> Delete
+                                                </button>
+                                            </form>
+                                            <button class="btn btn-outline-success btn-sm save-eval">
+                                                <i class="bi bi-download"></i> Save
+                                            </button>
+                                        </div>
+                                    </div>
+                                </li>
+                                {% endfor %}
+                            </ul>
+                            
+                            {% for section in data.summary.sections %}
+                            <div class="card mb-3">
+                                <div class="card-header bg-light">
+                                    <h6 class="mb-0">{{ section.name }}</h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="table-responsive">
+                                        <table class="table table-bordered table-hover">
+                                            <thead class="table-light">
+                                                <tr>
+                                                    <th>Question</th>
+                                                    {% for participant in data.summary.participants %}
+                                                    <th>{{ participant }}</th>
+                                                    {% endfor %}
+                                                    <th>Average</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {% for question, qdata in section.questions.items() %}
+                                                <tr {% if qdata.average < 2 %}class="table-danger"{% endif %}>
+                                                    <td>{{ question }}</td>
+                                                    {% for participant in data.summary.participants %}
+                                                    <td class="text-center">{{ qdata.ratings.get(participant, '-') }}</td>
+                                                    {% endfor %}
+                                                    <td class="text-center fw-bold">{{ qdata.average }}</td>
+                                                </tr>
+                                                {% endfor %}
+                                                <tr class="table-info">
+                                                    <td colspan="{{ data.summary.participants|length + 1 }}" class="text-end fw-bold">Average Per Group:</td>
+                                                    <td class="text-center fw-bold">{{ section.average_per_group }}</td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                            
+                            {% if data.summary.comments %}
+                            <div class="card mt-4">
+                                <div class="card-header bg-info text-white">
+                                    <h5 class="mb-0">Participant Comments</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="table-responsive">
+                                        <table class="table table-striped">
+                                            <thead>
+                                                <tr>
+                                                    <th width="20%">Participant</th>
+                                                    <th>Comment</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {% for name, comment in data.summary.comments %}
+                                                <tr>
+                                                    <td class="fw-bold">{{ name }}</td>
+                                                    <td>{{ comment }}</td>
+                                                </tr>
+                                                {% endfor %}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endif %}
+
+                            <div class="card mt-4">
+                                <div class="card-header bg-primary text-white">
+                                    <h5 class="mb-0">Batch Overall Summary</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="table-responsive">
+                                        <table class="table table-bordered">
+                                            <thead class="table-light">
+                                                <tr>
+                                                    <th>Metric</th>
+                                                    <th>Value</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <tr>
+                                                    <td>Average of Section Averages</td>
+                                                    <td class="fw-bold">{{ data.summary.batch_average }}</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>Total Participants</td>
+                                                    <td>{{ data.summary.participants|length }}</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>Total Questions</td>
+                                                    <td>{{ data.summary.total_questions }}</td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="alert alert-success mt-3">
+                                <strong>Total Points for Batch:</strong> 
+                                {{ data.summary.total_points if 'total_points' in data.summary else "Not available" }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        initializeCollapses();
+        
+        document.getElementById('searchFilter').addEventListener('change', function() {
+            const filter = this.value;
+            document.getElementById('defaultSearch').classList.toggle('d-none', 
+                filter === 'trainer' || filter === 'qualification' || filter === 'date');
+            document.getElementById('trainerSearch').classList.toggle('d-none', 
+                filter !== 'trainer');
+            document.getElementById('qualificationSearch').classList.toggle('d-none', 
+                filter !== 'qualification');
+            document.getElementById('dateSearch').classList.toggle('d-none', 
+                filter !== 'date');
+        });
+
+        document.getElementById('trainerSelect').addEventListener('change', function() {
+            if (document.getElementById('searchFilter').value === 'trainer') {
+                searchEvaluations();
+            }
+        });
+
+        document.getElementById('qualificationSelect').addEventListener('change', function() {
+            if (document.getElementById('searchFilter').value === 'qualification') {
+                searchEvaluations();
+            }
+        });
+
+        document.getElementById('searchInput').addEventListener('input', searchEvaluations);
+        document.getElementById('startDate').addEventListener('change', searchByDate);
+        document.getElementById('endDate').addEventListener('change', searchByDate);
+        
+        document.querySelectorAll('.clear-dropdown').forEach(button => {
+            button.addEventListener('click', function() {
+                const targetId = this.getAttribute('data-target');
+                document.getElementById(targetId).value = '';
+                if (targetId === 'startDate' || targetId === 'endDate') {
+                    searchByDate();
+                } else {
+                    searchEvaluations();
+                }
+            });
+        });
+    });
+
+    function initializeCollapses() {
+        document.querySelectorAll('.collapse').forEach(collapse => {
+            const instance = bootstrap.Collapse.getOrCreateInstance(collapse, { 
+                toggle: false 
+            });
+            instance.hide();
+        });
+    }
+
+    function searchEvaluations() {
+        const filterType = document.getElementById('searchFilter').value;
+        let searchTerm = '';
+        
+        if (filterType === 'trainer') {
+            searchTerm = document.getElementById('trainerSelect').value.trim();
+        } 
+        else if (filterType === 'qualification') {
+            searchTerm = document.getElementById('qualificationSelect').value.trim();
+        }
+        else if (filterType === 'date') {
+            searchByDate();
+            return;
+        }
+        else {
+            searchTerm = document.getElementById('searchInput').value.trim().toLowerCase();
+        }
+
+        const batches = document.querySelectorAll('.card.mb-4');
+        let anyMatches = false;
+
+        resetSearchHighlights();
+
+        batches.forEach(batch => {
+            const batchHeader = batch.querySelector('.card-header');
+            const batchCollapse = batch.querySelector('.collapse');
+            const participants = batch.querySelectorAll('.list-group-item span:first-child');
+            let batchHasMatch = false;
+
+            if (!searchTerm && filterType !== 'date') {
+                batch.style.display = 'block';
+                const collapseInstance = bootstrap.Collapse.getOrCreateInstance(batchCollapse, { 
+                    toggle: false 
+                });
+                collapseInstance.hide();
+                return;
+            }
+
+            switch(filterType) {
+                case 'student':
+                    participants.forEach(participant => {
+                        if (participant.textContent.toLowerCase().includes(searchTerm)) {
+                            highlightMatch(participant.parentElement);
+                            batchHasMatch = true;
+                        }
+                    });
+                    break;
+                    
+                case 'trainer':
+                    if (batchHeader.textContent.includes(searchTerm)) {
+                        highlightHeader(batchHeader);
+                        batchHasMatch = true;
+                    }
+                    break;
+                    
+                case 'qualification':
+                    if (batchHeader.textContent.includes(searchTerm)) {
+                        highlightHeader(batchHeader);
+                        batchHasMatch = true;
+                    }
+                    break;
+                    
+                default:
+                    if (batchHeader.textContent.toLowerCase().includes(searchTerm)) {
+                        highlightHeader(batchHeader);
+                        batchHasMatch = true;
+                    }
+                    participants.forEach(participant => {
+                        if (participant.textContent.toLowerCase().includes(searchTerm)) {
+                            highlightMatch(participant.parentElement);
+                            batchHasMatch = true;
+                        }
+                    });
+            }
+
+            if (batchHasMatch) {
+                batch.style.display = 'block';
+                anyMatches = true;
+                
+                const collapseInstance = bootstrap.Collapse.getOrCreateInstance(batchCollapse, { 
+                    toggle: false 
+                });
+                
+                if (filterType === 'student') {
+                    collapseInstance.show();
+                } else {
+                    collapseInstance.hide();
+                }
+            } else {
+                batch.style.display = 'none';
+            }
+        });
+
+        showNoResultsMessage(!anyMatches && searchTerm.length > 0);
+    }
+
+    function searchByDate() {
+        const startDateInput = document.getElementById('startDate').value;
+        const endDateInput = document.getElementById('endDate').value;
+        
+        const startDate = startDateInput ? new Date(startDateInput) : null;
+        const endDate = endDateInput ? new Date(endDateInput) : null;
+        
+        const batches = document.querySelectorAll('.card.mb-4');
+        let anyMatches = false;
+
+        batches.forEach(batch => {
+            batch.style.display = 'none';
+            resetSearchHighlights();
+        });
+
+        if (!startDate && !endDate) {
+            batches.forEach(batch => {
+                batch.style.display = 'block';
+                const batchCollapse = batch.querySelector('.collapse');
+                const collapseInstance = bootstrap.Collapse.getOrCreateInstance(batchCollapse, { 
+                    toggle: false 
+                });
+                collapseInstance.hide();
+            });
+            showNoResultsMessage(false);
+            return;
+        }
+
+        batches.forEach(batch => {
+            const batchHeader = batch.querySelector('.card-header');
+            const batchCollapse = batch.querySelector('.collapse');
+            const dateMatch = batchHeader.textContent.match(/(\d{4}-\d{2}-\d{2})\s*to\s*(\d{4}-\d{2}-\d{2})/);
+
+            if (dateMatch && dateMatch.length === 3) {
+                const batchStart = new Date(dateMatch[1]);
+                const batchEnd = new Date(dateMatch[2]);
+                
+                const isInRange = 
+                    (!startDate || batchStart >= startDate) && 
+                    (!endDate || batchEnd <= endDate);
+                
+                if (isInRange) {
+                    batch.style.display = 'block';
+                    highlightHeader(batchHeader);
+                    anyMatches = true;
+                    
+                    const collapseInstance = bootstrap.Collapse.getOrCreateInstance(batchCollapse, { 
+                        toggle: false 
+                    });
+                    collapseInstance.hide();
+                }
+            }
+        });
+
+        showNoResultsMessage(!anyMatches);
+    }
+
+    function resetSearchHighlights() {
+        document.querySelectorAll('.highlight, .bg-warning').forEach(el => {
+            el.classList.remove('highlight', 'bg-warning', 'text-white');
+        });
+    }
+
+    function highlightMatch(element) {
+        element.classList.add('highlight');
+    }
+
+    function highlightHeader(header) {
+        header.classList.add('bg-warning', 'text-white');
+    }
+
+    function expandBatch(batch) {
+        const collapseEl = batch.querySelector('.collapse');
+        if (!collapseEl.classList.contains('show')) {
+            new bootstrap.Collapse(collapseEl, { show: true });
+        }
+    }
+
+    function showNoResultsMessage(show) {
+        const noResults = document.getElementById('noResults');
+        if (noResults) {
+            noResults.style.display = show ? 'block' : 'none';
+        }
+    }
+
+    function clearDates() {
+        document.getElementById('startDate').value = '';
+        document.getElementById('endDate').value = '';
+        
+        resetSearchHighlights();
+        document.querySelectorAll('.card.mb-4').forEach(batch => {
+            batch.style.display = 'block';
+        });
+        
+        showNoResultsMessage(false);
+        
+        document.querySelectorAll('.collapse').forEach(collapse => {
+            const instance = bootstrap.Collapse.getInstance(collapse) || 
+                           new bootstrap.Collapse(collapse);
+            instance.hide();
+        });
+        
+        searchByDate();
+    }
+
+    function clearSearch() {
+        document.getElementById('searchInput').value = '';
+        document.getElementById('trainerSelect').value = '';
+        document.getElementById('qualificationSelect').value = '';
+        document.getElementById('startDate').value = '';
+        document.getElementById('endDate').value = '';
+        
+        document.getElementById('searchFilter').value = 'all';
+        document.getElementById('defaultSearch').classList.remove('d-none');
+        document.getElementById('trainerSearch').classList.add('d-none');
+        document.getElementById('qualificationSearch').classList.add('d-none');
+        document.getElementById('dateSearch').classList.add('d-none');
+        
+        resetSearchHighlights();
+        document.querySelectorAll('.card.mb-4').forEach(batch => {
+            batch.style.display = 'block';
+        });
+        
+        showNoResultsMessage(false);
+        
+        document.querySelectorAll('.collapse').forEach(collapse => {
+            const instance = bootstrap.Collapse.getInstance(collapse);
+            if (instance && collapse.classList.contains('show')) {
+                instance.hide();
+            }
+        });
+    }
+</script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        window.exportToExcel = async function () {
+            try {
+                const trainers = {};
+
+                document.querySelectorAll('.card.mb-4').forEach(batch => {
+                    const headerText = batch.querySelector('.card-header h5').textContent.trim();
+                    const trainerMatch = headerText.match(/-\s*([^-]+)$/);
+                    if (!trainerMatch) return;
+
+                    const trainerName = trainerMatch[1].trim();
+                    if (!trainers[trainerName]) {
+                        trainers[trainerName] = {
+                            batches: [],
+                            fileTitle: headerText.trim()
+                        };
+                    }
+                    trainers[trainerName].batches.push(batch);
+                });
+
+                for (const [trainerName, trainerData] of Object.entries(trainers)) {
+                    const workbook = XLSX.utils.book_new();
+                    const usedSheetNames = new Set();
+
+                    trainerData.batches.forEach((batch, index) => {
+                        const headerText = batch.querySelector('.card-header h5').textContent.trim();
+                        let parts = headerText.split(' - ');
+                        let qualification = parts.length >= 2 ? parts[1].trim() : `Sheet${index + 1}`;
+                        
+                        qualification = qualification.replace(/[\\\/:*?"<>|\[\]]/g, '').substring(0, 28);
+                        let sheetName = qualification;
+                        let counter = 1;
+                        while (usedSheetNames.has(sheetName)) {
+                            sheetName = `${qualification}_${counter++}`;
+                        }
+                        usedSheetNames.add(sheetName);
+
+                        const wsData = [
+                            ["Technical Education and Skills Development Authority"],
+                            [""],
+                            [""],
+                            ["Regional Training Center-02"],
+                            ["Carig Norte, Tuguegarao City, Cagayan"],
+                            [""],
+                            [""],
+                            ["Trainee's Evaluation, Statements and Testimonies (TEST)"],
+                            ["Question"]
+                        ];
+
+                        const allParticipants = [...batch.querySelectorAll('.list-group-item span')]
+                            .map(span => span.textContent.trim());
+                        wsData.push(["TRAINER", ...allParticipants, "Average"]);
+
+                        batch.querySelectorAll('.card.mb-3').forEach(section => {
+                            const sectionName = section.querySelector('.card-header h6')?.textContent.trim().toUpperCase();
+                            if (sectionName) wsData.push([sectionName]);
+
+                            section.querySelectorAll('table tbody tr').forEach(row => {
+                                const cells = row.querySelectorAll('td');
+                                if (cells.length >= 2) {
+                                    const rowData = [cells[0].textContent.trim()];
+                                    for (let i = 1; i < cells.length - 1; i++) {
+                                        rowData.push(cells[i].textContent.trim());
+                                    }
+                                    rowData.push(cells[cells.length-1].textContent.trim());
+                                    wsData.push(rowData);
+                                }
+                            });
+
+                            const sectionAverageRow = section.querySelector('tr.table-info td:last-child');
+                            if (sectionAverageRow) {
+                                wsData.push(["Average Per Group:", "", sectionAverageRow.textContent.trim()]);
+                            }
+                            wsData.push([""]);
+                        });
+
+                        wsData.push(["Batch Overall Summary"]);
+                        const summaryCard = Array.from(batch.querySelectorAll('.card')).find(card => {
+                            const title = card.querySelector('.card-header h5')?.textContent.trim();
+                            return title && title.toLowerCase().includes('batch overall summary');
+                        });
+
+                        if (summaryCard) {
+                            const summaryTable = summaryCard.querySelector('table');
+                            if (summaryTable) {
+                                summaryTable.querySelectorAll('tr').forEach(row => {
+                                    const cells = row.querySelectorAll('td');
+                                    if (cells.length === 2) {
+                                        wsData.push([cells[0].textContent.trim(), "", cells[1].textContent.trim()]);
+                                    }
+                                });
+                            }
+                        }
+
+                        const totalPointsText = batch.querySelector('.alert-success')?.textContent.trim();
+                        const pointsMatch = totalPointsText?.match(/Total Points for Batch:\s*(.+)/i);
+                        if (pointsMatch) {
+                            wsData.push(['']);
+                            wsData.push(['Total Points for Batch:', '', pointsMatch[1].trim()]);
+                        }
+
+                        const sheet = XLSX.utils.aoa_to_sheet(wsData);
+                        XLSX.utils.book_append_sheet(workbook, sheet, sheetName);
+                    });
+
+                    const cleanFileName = trainerName.replace(/[\\\/:*?"<>|\[\]]/g, '').trim();
+                    const finalFileName = `${cleanFileName}.xlsx`;
+                    XLSX.writeFile(workbook, finalFileName);
+                }
+            } catch (err) {
+                console.error('Export failed:', err);
+                alert('Failed to export. See console for details.');
+            }
+        };
+    });
+</script>
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        document.querySelectorAll('.save-eval').forEach(button => {
+            button.addEventListener('click', function () {
+                const batchCard = this.closest('.card.mb-4');
+                if (!batchCard) return;
+
+                const headerText = batchCard.querySelector('.card-header h5')?.textContent.trim() || 'Evaluation';
+                let sheetName = 'Evaluation';
+                const wb = XLSX.utils.book_new();
+                const wsData = [];
+
+                wsData.push(['Question', 'Rating']);
+
+                batchCard.querySelectorAll('.card.mb-3').forEach(section => {
+                    const sectionTitle = section.querySelector('.card-header h6')?.textContent.trim().toUpperCase();
+                    if (sectionTitle) wsData.push([sectionTitle]);
+
+                    section.querySelectorAll('tbody tr').forEach(row => {
+                        const cells = row.querySelectorAll('td');
+                        if (cells.length >= 2) {
+                            const question = cells[0].textContent.trim();
+                            const rating = cells[1].textContent.trim();
+                            wsData.push([question, rating]);
+                        }
+                    });
+
+                    wsData.push(['']);
+                });
+
+                wsData.push(['Section Averages']);
+                const summaryTable = batchCard.querySelector('.table-bordered');
+                if (summaryTable) {
+                    summaryTable.querySelectorAll('tr').forEach(row => {
+                        const tds = row.querySelectorAll('td');
+                        if (tds.length === 2) {
+                            const label = tds[0].textContent.trim();
+                            const value = tds[1].textContent.trim();
+                            wsData.push([label, value]);
+                        }
+                    });
+                }
+
+                const alert = batchCard.querySelector('.alert-success');
+                if (alert) {
+                    const text = alert.textContent.trim();
+                    const pointMatch = text.match(/Total Points for Batch:\s*(.+)/i);
+                    if (pointMatch) {
+                        wsData.push(['']);
+                        wsData.push(['Total Points', pointMatch[1].trim()]);
+                    }
+                }
+
+                const sheet = XLSX.utils.aoa_to_sheet(wsData);
+                XLSX.utils.book_append_sheet(wb, sheet, sheetName);
+
+                const studentName = batchCard.querySelector('.list-group-item span')?.textContent.trim() || 'evaluation';
+                const cleanFileName = studentName.replace(/[\\\/:*?"<>|\[\]]/g, '').trim() + '.xlsx';
+
+                XLSX.writeFile(wb, cleanFileName);
+            });
+        });
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>{% block title %}Training Evaluation System{% endblock %}</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+    <header class="app-header">
+        <div class="header-content">
+            <div class="header-left">
+      <a href="#" class="logo">
+  <i class="fas fa-clipboard-check"></i>
+  <span class="logo-text">
+    <span class="first-letter">T</span>rainee's 
+    <span class="first-letter">E</span>valuation, 
+    <span class="first-letter">S</span>tatement &  
+    <span class="first-letter">T</span>estimonies
+  </span>
+</a>
+                <nav class="nav-links">
+                    <a href="/" class="nav-link">
+                        <i class="fas fa-edit"></i>
+                        <span>Evaluation</span>
+                    </a>
+                    <a href="/admin" class="nav-link">
+                        <i class="fas fa-user-shield"></i>
+                        <span>Admin</span>
+                    </a>
+						 {% if admin_is_on %}
+						 <a href="/admin_logout" class="nav-link">
+							<i class="fas fa-sign-out-alt"></i>
+							<span>Logout</span>
+						</a>
+						{% endif %}
+						
+						<a href="/about" class="nav-link {% if request.path == '/about' %}active{% endif %}">
+        <i class="fas fa-info-circle"></i>
+        <span>About</span>
+    </a>
+                </nav>
+            </div>
+            <div class="header-images">
+                <img src="/static/org.png" alt="Organization Logo" class="header-logo-image">
+                <img src="/static/face.png" alt="Training Department" class="header-logo-image">
+				<img src="/static/tesda.png" alt="Organization Logo" class="header-logo-image">
+                <img src="/static/cpe.png" alt="Training Department" class="header-logo-image">
+            </div>
+        </div>
+    </header>

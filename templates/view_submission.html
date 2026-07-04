@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>View Evaluation</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #f8f9fa;
+        }
+        .evaluation-container {
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+            padding: 30px;
+            margin-top: 30px;
+        }
+        .section-title {
+            color: #0d6efd;
+            margin: 25px 0 15px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid #0d6efd;
+        }
+        .rating-badge {
+            font-size: 0.9rem;
+            padding: 5px 10px;
+            border-radius: 20px;
+            background-color: #e9ecef;
+        }
+        .section-title {
+            color: #0d6efd;
+            margin: 0;
+        }
+        .badge.fs-5 {
+            font-size: 1.1rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container py-5">
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <div class="evaluation-container">
+                    <h2 class="text-center mb-4">Evaluation by {{ name }}</h2>
+                    
+                    <div class="card mb-4">
+                        <div class="card-header bg-primary text-white">
+                            <h5 class="mb-0">Participant Information</h5>
+                        </div>
+                        <ul class="list-group list-group-flush">
+                            <li class="list-group-item d-flex justify-content-between">
+                                <span><strong>Qualification:</strong></span>
+                                <span>{{ participant[1] }}</span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between">
+                                <span><strong>Program Type:</strong></span>
+                                <span>{{ participant[2] }}</span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between">
+                                <span><strong>Training Duration:</strong></span>
+                                <span>{{ participant[3] }}</span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between">
+                                <span><strong>Trainer Name:</strong></span>
+                                <span>{{ participant[4] }}</span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between">
+                                <span><strong>Evaluation Date:</strong></span>
+                                <span>{{ participant[5] }}</span>
+                            </li>
+                        </ul>
+                    </div>
+
+                    {% for section, evaluations in section_criteria.items() %}
+                    <h4 class="section-title">{{ section }}</h4>
+                    <div class="card mb-3">
+                        <ul class="list-group list-group-flush">
+                            {% for question, rating in evaluations %}
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                <span>{{ question }}</span>
+                                <span class="rating-badge">Rating: {{ rating }}</span>
+                            </li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                    {% endfor %}
+
+                    <div class="card mb-4">
+                        <div class="card-header bg-light">
+                            <h5 class="mb-0">Additional Comments</h5>
+                        </div>
+                        <div class="card-body">
+                            <p>{{ participant[6] if participant[6] else "No comments provided" }}</p>
+                        </div>
+                    </div>
+
+                    <div class="card mb-4">
+                        <div class="card-header bg-success text-white">
+                            <h5 class="mb-0">Evaluation Summary</h5>
+                        </div>
+                        <ul class="list-group list-group-flush">
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                <span class="fw-bold">Total Points:</span>
+                                <span class="badge bg-primary rounded-pill fs-5">{{ total_points }}</span>
+                            </li>
+                        </ul>
+                    </div>
+
+                    <div class="d-flex justify-content-between">
+                        {% if admin_view %}
+                        <a href="/admin" class="btn btn-secondary">Back to Admin</a>
+                        {% else %}
+                        <a href="/" class="btn btn-primary">Submit New Evaluation</a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

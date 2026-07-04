@@ -1,0 +1,128 @@
+{% extends "base.html" %}
+
+{% block title %}Trainer Ratings{% endblock %}
+
+{% block extra_css %}
+    <style>
+        .rating-card {
+            transition: transform 0.2s;
+            border-left: 5px solid #0d6efd;
+        }
+        .rating-card:hover {
+            transform: translateY(-3px);
+        }
+        .progress {
+            height: 25px;
+        }
+        .progress-bar {
+            font-weight: bold;
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h4 class="mb-0">Trainer Performance Ratings</h4>
+                        <div>
+                            {% if is_master_admin %}
+                            <a href="{{ url_for('leaderboard') }}" class="btn btn-light btn-sm">
+                                <i class="bi bi-trophy"></i> View Leaderboard
+                            </a>
+                            {% endif %}
+                            <a href="/admin" class="btn btn-danger ms-2">
+                                Back
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                {% if is_master_admin %}
+                <div class="card-body">
+                    <div class="accordion" id="trainerAccordion">
+                        {% for trainer, qualifications in trainer_ratings.items() %}
+                        <div class="accordion-item">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button" type="button" data-bs-toggle="collapse" 
+                                        data-bs-target="#collapse{{ loop.index }}">
+                                    {{ trainer }} 
+                                    <span class="badge bg-success ms-2">
+                                        Avg: {{ "%.2f"|format(qualifications['overall']) }}
+                                    </span>
+                                </button>
+                            </h2>
+                            <div id="collapse{{ loop.index }}" class="accordion-collapse collapse show" 
+                                 data-bs-parent="#trainerAccordion">
+                                <div class="accordion-body">
+                                    <div class="row">
+                                        {% for qual, data in qualifications.items() if qual != 'overall' %}
+                                        <div class="col-md-6 mb-3">
+                                            <div class="card rating-card h-100">
+                                                <div class="card-body">
+                                                    <h5>{{ qual }}</h5>
+                                                    <div class="d-flex justify-content-between mb-2">
+                                                        <span>Average Rating:</span>
+                                                        <strong>{{ "%.2f"|format(data.average) }}/3.00</strong>
+                                                    </div>
+                                                    <div class="progress mb-2">
+                                                        <div class="progress-bar bg-success" 
+                                                             style="width: {{ (data.average/3)*100 }}%">
+                                                            {{ "%.0f"|format((data.average/3)*100) }}%
+                                                        </div>
+                                                    </div>
+                                                    <small class="text-muted">
+                                                        Based on {{ data.count }} evaluation(s)
+                                                    </small>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                
+                {% else %}
+                <div class="card-body">
+                    <div class="row">
+                        {% for qual, data in trainer_ratings.items() %}
+                        <div class="col-md-6 mb-3">
+                            <div class="card rating-card h-100">
+                                <div class="card-body">
+                                    <h5>{{ qual }}</h5>
+                                    <div class="d-flex justify-content-between mb-2">
+                                        <span>Your Rating:</span>
+                                        <strong>{{ "%.2f"|format(data.average) }}/3.00</strong>
+                                    </div>
+                                    <div class="progress mb-2">
+                                        <div class="progress-bar bg-success" 
+                                             style="width: {{ (data.average/3)*100 }}%">
+                                            {{ "%.0f"|format((data.average/3)*100) }}%
+                                        </div>
+                                    </div>
+                                    <small class="text-muted">
+                                        Based on {{ data.count }} evaluation(s)
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+{% endblock %}

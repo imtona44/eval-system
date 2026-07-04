@@ -1,0 +1,244 @@
+{% extends "base.html" %}
+
+{% block title %}Evaluation Form{% endblock %}
+
+{% block extra_css %}
+<style>
+    .form-container {
+        background-color: white;
+        border-radius: 10px;
+        box-shadow: 0 0 20px rgba(0,0,0,0.1);
+        padding: 30px;
+        margin-top: 30px;
+    }
+    
+    .criteria-item {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+    }
+    
+    .criteria-text {
+        flex: 1 1 300px;
+        font-weight: 500;
+        min-width: 200px;
+    }
+    
+    .rating-options {
+        display: flex;
+        gap: 1.5rem;
+        align-items: center;
+        flex-shrink: 0;
+    }
+    
+    .rating-option {
+        display: flex;
+        align-items: center;
+        gap: 0.3rem;
+        white-space: nowrap;
+    }
+    
+    .section-header {
+        color: #0d6efd;
+        margin: 25px 0 15px;
+        padding-bottom: 8px;
+        border-bottom: 2px solid #0d6efd;
+    }
+    
+    @media (max-width: 768px) {
+        .criteria-item {
+            gap: 0.5rem;
+        }
+        .rating-options {
+            gap: 1rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="form-container">
+                <h2 class="text-center mb-4">Training Evaluation Form</h2>
+           
+                <form method="POST">
+                    <div class="mb-3">
+                        <label class="form-label">Name</label>
+                        <input type="text" name="name" class="form-control" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Qualification</label>
+                        <select name="qualification" class="form-select" required>
+                            <option value="" disabled selected>Select Qualification</option>
+                            <option value="Automotive Servicing NC I">Automotive Servicing NC I</option>
+                            <option value="Automotive Servicing NC II">Automotive Servicing NC II</option>
+                            <option value="Driving NC II">Driving NC II</option>
+                            <option value="Carpentry NC II">Carpentry NC II</option>
+                            <option value="Masonry NC II">Masonry NC II</option>
+                            <option value="Cookery NC II">Cookery NC II</option>
+                            <option value="Housekeeping NC II">Housekeeping NC II</option>
+                            <option value="Electrical Installation and Maintenance NC II">Electrical Installation and Maintenance NC II</option>
+                            <option value="Electronic Products Assembly Servicing NC II">Electronic Products Assembly Servicing NC II</option>
+                            <option value="RAC Servicing(DomRAC) NC II">RAC Servicing(DomRAC) NC II</option>
+                            <option value="Shielded Metal Arc Welding NC II">Shielded Metal Arc Welding NC II</option>
+                            <option value="Organic Agriculture Production NC II">Organic Agriculture Production NC II</option>
+                            <option value="Motorcycle/Small Engine Servicing NC II">Motorcycle/Small Engine Servicing NC II</option>
+                            <option value="Trainers Methodology I">Trainers Methodology I</option>
+                            <option value="Bread and Pastry Production NC II">Bread and Pastry Production NC II</option>
+                            <option value="PV System Installation NC II">PV System Installation NC II</option>
+                            <option value="PV System Servicing NC III">PV System Servicing NC III</option>
+                            <option value="Technical Drafting NC II Draft architectural layout and details">Technical Drafting NC II Draft architectural layout and details</option>
+                            <option value="Technical Drafting NC II Draft Structural layout and details">Technical Drafting NC II Draft Structural layout and details</option>
+                            <option value="English Proficiency for Customers Workers/Provider">English Proficiency for Customers Workers/Provider</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Training Duration</label>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <label class="form-label">Start Date</label>
+                                <input type="date" name="start_date" class="form-control" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">End Date</label>
+                                <input type="date" name="end_date" class="form-control" required>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Trainer's Name</label>
+                        <select name="trainer_name" class="form-select" required>
+                            <option value="" disabled selected>Select Trainer</option>
+                            <option value="TRAINER 1">TRAINER 1</option>
+                            <option value="TRAINER 2">TRAINER 2</option>
+                            <option value="TRAINER 3">TRAINER 3</option>
+                            <option value="TRAINER 4">TRAINER 4</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Evaluation Date</label>
+                        <input type="date" name="evaluation_date" class="form-control" required>
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="form-label">Program Type</label>
+                        <select name="program_type" class="form-select" required>
+                            <option value="" disabled selected>Select Program Type</option>
+                            <option value="regular">Regular</option>
+                            <option value="scholarship">Scholarship</option>
+                        </select>
+                    </div>
+
+                    {% for section, criteria in section_criteria.items() %}
+                    <h4 class="section-header">{{ section }}</h4>
+                    {% for crit in criteria %}
+                    <div class="criteria-item">
+                        <div class="criteria-text">{{ crit[1] }}</div>
+                        <div class="rating-options">
+                            <div class="rating-option">
+                                <input type="radio" id="criterion_{{ crit[0] }}_1" name="criterion_{{ crit[0] }}" value="1" required>
+                                <label for="criterion_{{ crit[0] }}_1">1 - Disagree</label>
+                            </div>
+                            <div class="rating-option">
+                                <input type="radio" id="criterion_{{ crit[0] }}_2" name="criterion_{{ crit[0] }}" value="2">
+                                <label for="criterion_{{ crit[0] }}_2">2 - Agree</label>
+                            </div>
+                            <div class="rating-option">
+                                <input type="radio" id="criterion_{{ crit[0] }}_3" name="criterion_{{ crit[0] }}" value="3">
+                                <label for="criterion_{{ crit[0] }}_3">3 - Very Much Agree</label>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                    {% endfor %}
+
+                    <div class="mb-4">
+                        <h4 class="section-header">Comments / Suggestions</h4>
+                        <div class="ps-3">
+                            <select name="comment_option" id="commentOption" class="form-select mb-2" onchange="toggleCommentBox()">
+                                <option value="NONE">No comments</option>
+                                <option value="OTHER">I want to provide comments</option>
+                            </select>
+                            
+                            <div id="commentBox" style="display: none;">
+                                <textarea name="comments" class="form-control" rows="4"></textarea>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-primary btn-lg">Submit Evaluation</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    function toggleCommentBox() {
+        const commentOption = document.getElementById('commentOption');
+        const commentBox = document.getElementById('commentBox');
+        commentBox.style.display = (commentOption.value === 'OTHER') ? 'block' : 'none';
+        
+        if (commentOption.value === 'NONE') {
+            document.querySelector('#commentBox textarea').value = '';
+        }
+    }
+    
+    document.addEventListener('DOMContentLoaded', function() {
+        const form = document.querySelector('form');
+        
+        form.addEventListener('submit', function(event) {
+            let isValid = true;
+            
+            const requiredFields = form.querySelectorAll('[required]');
+            requiredFields.forEach(field => {
+                if (!field.value.trim()) {
+                    isValid = false;
+                    field.classList.add('is-invalid');
+                } else {
+                    field.classList.remove('is-invalid');
+                }
+            });
+            
+            const radioGroups = {};
+            form.querySelectorAll('input[type="radio"]').forEach(radio => {
+                const name = radio.getAttribute('name');
+                if (!radioGroups[name]) {
+                    radioGroups[name] = false;
+                }
+                if (radio.checked) {
+                    radioGroups[name] = true;
+                }
+            });
+            
+            for (const group in radioGroups) {
+                if (!radioGroups[group]) {
+                    isValid = false;
+                    const firstRadio = form.querySelector(`input[name="${group}"]`);
+                    firstRadio.closest('.rating-options').classList.add('border', 'border-danger', 'rounded', 'p-2');
+                } else {
+                    const firstRadio = form.querySelector(`input[name="${group}"]`);
+                    firstRadio.closest('.rating-options').classList.remove('border', 'border-danger', 'rounded', 'p-2');
+                }
+            }
+            
+            if (!isValid) {
+                event.preventDefault();
+                alert('Please fill out all required fields and rate all criteria.');
+            }
+        });
+    });
+</script>
+{% endblock %}
